@@ -18,56 +18,50 @@ function BookList() {
   const [displayedBooks, setDisplayedBooks] = useState([]); // State to hold currently displayed books
 
   useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        const response = await fetch(`http://127.0.0.1:8000/booklist/?q=${searchTerm}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setBooks(data.books || []);  // Ensure 'books' is accessed correctly
-          setRole(data.current_user_role || '');  // Ensure 'current_user_role' is accessed correctly
-        } else {
-          console.log('Failed to fetch books');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    };
-
     fetchBooks();
-  }, [searchTerm]);
+  }, []);
+
+  const fetchBooks = async () => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/booklist/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDisplayedBooks(data.books || []);  // Ensure 'books' is accessed correctly
+        setRole(data.current_user_role || '');  // Ensure 'current_user_role' is accessed correctly
+      } else {
+        console.log('Failed to fetch books');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
   const handleSearchChange = async (e) => {
     const searchValue = e.target.value;
     setSearchTerm(searchValue);
 
-    if (searchValue) {
-      // Fetch books based on the search term from the search_book URL
-      try {
-        const response = await fetch(`http://127.0.0.1:8000/search_book/?q=${searchValue}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setDisplayedBooks(data); // Show filtered books based on the search
-        } else {
-          console.error('Failed to fetch search results');
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/search_book/?q=${searchValue}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         }
-      } catch (error) {
-        console.error('Error searching books:', error);
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDisplayedBooks(data); // Show filtered books based on the search
+      } else {
+        console.error('Failed to fetch search results');
       }
-    } else {
-      // If search is cleared, show all books
-      setDisplayedBooks(allBooks);
+    } catch (error) {
+      console.error('Error searching books:', error);
     }
   };
 
@@ -85,6 +79,7 @@ function BookList() {
         setBooks(books.filter(book => book.id !== selectedBookId));
         setShowModal(false);  // Close the modal
         alert('Book deleted successfully.');
+        fetchBooks();
       } else {
         alert('Failed to delete book.');
       }
@@ -140,6 +135,7 @@ function BookList() {
         setTitle('');
         setAuthor('');
         setIsbn('');
+        fetchBooks();
         // Optionally update state or fetch books again
       } else {
         alert('Failed to update book.');
@@ -176,7 +172,6 @@ function BookList() {
   };
   
 
-
   return (
     <div className="container mt-5">
       <h2>Book List</h2>
@@ -196,61 +191,13 @@ function BookList() {
             >
               Add Book
             </Button>
-
-            {/* Modal for Adding Book */}
-            <Modal show={showAddBookForm} onHide={() => setShowAddBookForm(false)}>
-              <Modal.Header closeButton>
-                <Modal.Title>Add Book</Modal.Title>
-              </Modal.Header>
-              <Modal.Body>
-                <Form onSubmit={handleSubmit}>
-                  <Form.Group controlId="formTitle">
-                    <Form.Label>Title</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Enter book title"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      required
-                    />
-                  </Form.Group>
-                  <Form.Group controlId="formAuthor">
-                    <Form.Label>Author</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Enter book author"
-                      value={author}
-                      onChange={(e) => setAuthor(e.target.value)}
-                      required
-                    />
-                  </Form.Group>
-                  <Form.Group controlId="formIsbn">
-                    <Form.Label>ISBN</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Enter book ISBN"
-                      value={isbn}
-                      onChange={(e) => setIsbn(e.target.value)}
-                      required
-                    />
-                  </Form.Group>
-                  <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowAddBookForm(false)}>
-                      Close
-                    </Button>
-                    <Button variant="primary" type="submit">
-                      Add Book
-                    </Button>
-                  </Modal.Footer>
-                </Form>
-              </Modal.Body>
-            </Modal>
           </>
         )}
       </div>
       <Table striped bordered hover>
         <thead>
           <tr>
+            <th>ID</th>
             <th>Title</th>
             <th>Author</th>
             <th>ISBN</th>
@@ -258,9 +205,10 @@ function BookList() {
           </tr>
         </thead>
         <tbody>
-          {books.length > 0 ? (
-            books.map((book) => (
+          {displayedBooks.length > 0 ? (
+            displayedBooks.map((book) => (
               <tr key={book.id}>
+                <td>{book.id}</td>
                 <td>{book.title}</td>
                 <td>{book.author}</td>
                 <td>{book.isbn}</td>
@@ -295,6 +243,55 @@ function BookList() {
           )}
         </tbody>
       </Table>
+
+      {/* Modal for Adding Book */}
+      <Modal show={showAddBookForm} onHide={() => setShowAddBookForm(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Add Book</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group controlId="formTitle">
+              <Form.Label>Title</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter book title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </Form.Group>
+            <Form.Group controlId="formAuthor">
+              <Form.Label>Author</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter book author"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
+                required
+              />
+            </Form.Group>
+            <Form.Group controlId="formIsbn">
+              <Form.Label>ISBN</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter book ISBN"
+                value={isbn}
+                onChange={(e) => setIsbn(e.target.value)}
+                required
+              />
+            </Form.Group>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={() => setShowAddBookForm(false)}>
+                Close
+              </Button>
+              <Button variant="primary" type="submit">
+                Add Book
+              </Button>
+            </Modal.Footer>
+          </Form>
+        </Modal.Body>
+      </Modal>
 
       {/* Modal for Confirming Deletion */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>

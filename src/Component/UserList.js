@@ -16,33 +16,33 @@ function UserList() {
   const isLibrarian = role === 'librarian';
 
   useEffect(() => {
-    const fetchUserList = async () => {
-      setRole(localStorage.getItem('role'));
-
-      try {
-        const response = await fetch('http://127.0.0.1:8000/userlist/', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUsers(data || []);
-          setFilteredUsers(data || []);
-        } else {
-          console.log('Failed to fetch user list');
-        }
-      } catch (error) {
-        console.error('Error fetching user list:', error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchUserList();
   }, []);
+
+  const fetchUserList = async () => {
+    setRole(localStorage.getItem('role'));
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/userlist/', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data || []);
+        setFilteredUsers(data || []);
+      } else {
+        console.log('Failed to fetch user list');
+      }
+    } catch (error) {
+      console.error('Error fetching user list:', error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleUpdateUser = async () => {
     if (!selectedUser) return;
@@ -72,6 +72,7 @@ function UserList() {
           user.id === updatedUser.id ? updatedUser : user
         ));
         setShowUpdateModal(false);
+        fetchUserList();
       } else {
         console.log('Failed to update user details');
       }
