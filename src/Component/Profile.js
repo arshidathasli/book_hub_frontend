@@ -15,10 +15,11 @@ function Profile() {
     role: ''
   });
 
+  // Fetch existing user data
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/update_profile/', {
+        const response = await fetch('http://127.0.0.1:8000/update_profile_self/', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
@@ -27,11 +28,12 @@ function Profile() {
 
         if (response.ok) {
           const data = await response.json();
+          // Set fetched data to both user and updatedUser states
           setUser(data);
           setUpdatedUser({
-            email: data.email,
-            name: data.name,
-            role: data.role,
+            email: data.email || '',
+            name: data.name || '',
+            role: data.role || '',
           });
         } else {
           console.log('Failed to fetch user data');
@@ -44,9 +46,11 @@ function Profile() {
     fetchUserData();
   }, []);
 
+  // Show and hide modal functions
   const handleShowModal = () => setShowModal(true);
   const handleCloseModal = () => setShowModal(false);
 
+  // Handle changes in the input fields
   const handleChange = (e) => {
     const { name, value } = e.target;
     setUpdatedUser((prevUser) => ({
@@ -55,9 +59,10 @@ function Profile() {
     }));
   };
 
+  // Save updated profile changes
   const handleSaveChanges = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/update_profile/', {
+      const response = await fetch('http://127.0.0.1:8000/update_profile_self/', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -68,8 +73,9 @@ function Profile() {
 
       if (response.ok) {
         const data = await response.json();
+        // Update user state with the response data
         setUser(data);
-        handleCloseModal(); // Close modal after saving changes
+        handleCloseModal(); // Close the modal after saving changes
       } else {
         console.log('Failed to update user data');
       }
@@ -107,24 +113,29 @@ function Profile() {
                 name="email"
                 value={updatedUser.email}
                 onChange={handleChange}
+                placeholder="Enter your email"
               />
             </Form.Group>
-            <Form.Group>
+            <Form.Group className="mt-3">
               <Form.Label>Name</Form.Label>
               <Form.Control
                 type="text"
                 name="name"
                 value={updatedUser.name}
                 onChange={handleChange}
+                placeholder="Enter your name"
               />
             </Form.Group>
-            <Form.Group>
+            <Form.Group className="mt-3">
               <Form.Label>Role</Form.Label>
               <Form.Control
                 type="text"
                 name="role"
                 value={updatedUser.role}
                 onChange={handleChange}
+                placeholder="Enter your role"
+                readOnly // Optional: make role read-only if not meant to be editable
+                disabled
               />
             </Form.Group>
           </Form>
